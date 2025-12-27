@@ -1,114 +1,100 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Image, StyleSheet, TextInput, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
-import { matchesList, getActiveChats } from '@/utils/dataStore'; // Import getActiveChats
+import { getActiveChats, userProfile } from '@/utils/dataStore';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Matches() {
     const router = useRouter();
     const isFocused = useIsFocused();
-    
-    const [newMatches, setNewMatches] = useState<any[]>([]);
-    const [activeChats, setActiveChats] = useState<any[]>([]);
+    const [allMatches, setAllMatches] = useState<any[]>([]);
+    const [isDark, setIsDark] = useState(userProfile.theme === 'dark');
 
     useEffect(() => {
         if (isFocused) {
-            // 1. Ambil Match Baru (Bulatan Atas)
-            setNewMatches([...matchesList]); 
-            
-            // 2. Ambil Chat Aktif (List Pesan Bawah)
-            const chats = getActiveChats(); 
-            setActiveChats(chats);
+            setAllMatches(getActiveChats());
+            setIsDark(userProfile.theme === 'dark');
         }
     }, [isFocused]);
 
-    const openChat = (name: string, img: string) => {
-        router.push({
-            pathname: "/chat_room",
-            params: { name, image: img }
-        });
-    };
+    const bgColor = isDark ? ['#0f172a', '#1e1b4b'] : ['#f8fafc', '#ffffff'];
+    const textColor = isDark ? '#fff' : '#1e293b';
+    const cardBg = isDark ? 'rgba(30, 41, 59, 0.6)' : '#ffffff';
+    const borderColor = isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0';
 
     return (
-        <SafeAreaView style={styles.container}>
+        <LinearGradient colors={bgColor} style={styles.container}>
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
             <View style={styles.header}>
-                <Text style={styles.title}>Matches</Text>
+                <Text style={[styles.headerTitle, { color: textColor }]}>Messages</Text>
             </View>
 
-            <ScrollView style={styles.content}>
-                <View style={styles.searchContainer}>
-                    <TextInput placeholder="Search matches" style={styles.input} />
-                </View>
-
-                {/* --- BAGIAN 1: NEW MATCHES (Belum Dichat) --- */}
-                <Text style={styles.sectionTitle}>New Matches</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalList}>
-                    <View style={styles.matchItem}>
-                         <View style={[styles.avatarContainer, styles.likesContainer]}>
-                            <Text style={styles.likesText}>10+</Text>
-                            <Text style={styles.likesLabel}>Likes</Text>
-                         </View>
+            <ScrollView contentContainerStyle={styles.content}>
+                {allMatches.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Ionicons name="chatbubbles-outline" size={80} color={isDark ? "#334155" : "#cbd5e1"} />
+                        <Text style={[styles.emptyTitle, { color: textColor }]}>No messages yet</Text>
+                        <Text style={styles.emptySubtitle}>Swipe right to start connecting</Text>
                     </View>
-
-                    {newMatches.map((item: any) => (
-                        <TouchableOpacity 
-                            key={item.id} 
-                            style={styles.matchItem}
-                            onPress={() => openChat(item.name, item.img)}
-                        >
-                            <Image source={{ uri: item.img }} style={styles.avatar} />
-                            <Text style={styles.name}>{item.name}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-
-                {/* --- BAGIAN 2: MESSAGES (Sudah Dichat / History Ada) --- */}
-                <Text style={styles.sectionTitle}>Messages</Text>
-                
-                {activeChats.length === 0 ? (
-                    <Text style={{ color: 'gray', fontStyle: 'italic', marginTop: 10 }}>No messages yet. Start chatting with your matches!</Text>
                 ) : (
-                    activeChats.map((chat: any) => (
+                    allMatches.map((chat: any) => (
                         <TouchableOpacity 
                             key={chat.id} 
-                            style={styles.messageItem}
-                            onPress={() => openChat(chat.name, chat.img)}
+                            style={[styles.chatCard, { backgroundColor: cardBg, borderColor }]} 
+                            onPress={() => router.push({ pathname: "/chat_room", params: { name: chat.name, image: chat.img } })}
                         >
-                            <Image source={{ uri: chat.img }} style={styles.msgAvatar} />
-                            <View style={styles.msgContent}>
-                                <Text style={styles.msgName}>{chat.name}</Text>
-                                <Text style={styles.msgText} numberOfLines={1}>
-                                    You: {chat.lastMessage}
+                            <View style={styles.avatarContainer}>
+                                <Image source={{ uri: chat.img }} style={styles.avatar} />
+                                {chat.isNew && <View style={styles.onlineDot} />}
+                            </View>
+                            
+                            <View style={styles.textContainer}>
+                                <Text style={[styles.name, { color: textColor }]}>{chat.name}</Text>
+                                <Text style={[styles.message, chat.isNew && styles.newMessage]} numberOfLines={1}>
+                                    {chat.lastMessage}
                                 </Text>
+                            </View>
+                            
+                            <View style={styles.timeContainer}>
+                                <Text style={styles.timeText}>Now</Text>
+                                {chat.isNew && <View style={styles.badge}><Text style={styles.badgeText}>1</Text></View>}
                             </View>
                         </TouchableOpacity>
                     ))
                 )}
-
             </ScrollView>
-        </SafeAreaView>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff', paddingTop: 40 },
-    header: { padding: 20 },
-    title: { fontSize: 28, fontWeight: 'bold', color: '#FE3C72' },
-    content: { paddingHorizontal: 20 },
-    searchContainer: { backgroundColor: '#f0f0f0', padding: 10, borderRadius: 10, marginBottom: 20 },
-    input: { fontSize: 16 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#333' },
-    horizontalList: { flexDirection: 'row', marginBottom: 30 },
-    matchItem: { marginRight: 15, alignItems: 'center' },
-    avatar: { width: 70, height: 70, borderRadius: 35 },
-    name: { marginTop: 5, fontWeight: '600' },
-    messageItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-    msgAvatar: { width: 60, height: 60, borderRadius: 30 },
-    msgContent: { marginLeft: 15, flex: 1 },
-    msgName: { fontSize: 18, fontWeight: 'bold' },
-    msgText: { color: 'gray', marginTop: 2 },
-    avatarContainer: { width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center' },
-    likesContainer: { backgroundColor: '#E1BEE7', borderWidth: 2, borderColor: '#FE3C72' },
-    likesText: { fontWeight: 'bold', color: '#fff', fontSize: 16 },
-    likesLabel: { fontSize: 10, color: '#fff' },
+    container: { flex: 1 },
+    header: { paddingHorizontal: 25, paddingTop: 60, paddingBottom: 20 },
+    headerTitle: { fontSize: 34, fontWeight: 'bold' },
+    content: { paddingHorizontal: 20, paddingBottom: 100 },
+    
+    chatCard: { 
+        flexDirection: 'row', alignItems: 'center', 
+        padding: 15, borderRadius: 20, marginBottom: 15, borderWidth: 1, 
+        shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 5, elevation: 2
+    },
+    avatarContainer: { position: 'relative' },
+    avatar: { width: 60, height: 60, borderRadius: 30 },
+    onlineDot: { position: 'absolute', right: 0, bottom: 0, width: 14, height: 14, backgroundColor: '#4ade80', borderRadius: 7, borderWidth: 2, borderColor: '#fff' },
+    
+    textContainer: { flex: 1, marginLeft: 15 },
+    name: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
+    message: { fontSize: 14, color: '#94a3b8' },
+    newMessage: { color: '#38bdf8', fontWeight: '600' },
+    
+    timeContainer: { alignItems: 'flex-end' },
+    timeText: { fontSize: 12, color: '#64748b', marginBottom: 5 },
+    badge: { backgroundColor: '#38bdf8', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+    badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+
+    emptyContainer: { alignItems: 'center', marginTop: 100 },
+    emptyTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 20 },
+    emptySubtitle: { color: '#64748b', marginTop: 5 }
 });
