@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, TextInput, Alert, ScrollView, Switch } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { userProfile, updateUserProfile } from '@/utils/dataStore';
 import { LinearGradient } from 'expo-linear-gradient';
+import ScaleButton from '@/components/ScaleButton'; 
 
 export default function Profile() {
     const isFocused = useIsFocused();
@@ -12,14 +13,23 @@ export default function Profile() {
     const [theme, setTheme] = useState(userProfile.theme);
 
     const [modalVisible, setModalVisible] = useState(false);
+    
+    // STATE FORM EDIT
     const [editName, setEditName] = useState(userProfile.name);
     const [editJob, setEditJob] = useState(userProfile.job);
+    // Tambah state umur (diubah ke string biar bisa masuk TextInput)
+    const [editAge, setEditAge] = useState(userProfile.age ? String(userProfile.age) : ''); 
     const [editGender, setEditGender] = useState(userProfile.gender);
 
     useEffect(() => { 
         if (isFocused) {
             setProfile({ ...userProfile });
             setTheme(userProfile.theme);
+            // Reset form state saat profil dimuat ulang
+            setEditName(userProfile.name);
+            setEditJob(userProfile.job);
+            setEditAge(String(userProfile.age));
+            setEditGender(userProfile.gender);
         }
     }, [isFocused]);
 
@@ -29,7 +39,6 @@ export default function Profile() {
         updateUserProfile({ theme: newTheme });
     };
 
-    // Styling Logic
     const isDark = theme === 'dark';
     const bgColor = isDark ? ['#0f172a', '#111827'] : ['#f8fafc', '#ffffff'];
     const textColor = isDark ? '#fff' : '#1e293b';
@@ -46,8 +55,21 @@ export default function Profile() {
     };
 
     const handleSaveInfo = () => {
-        updateUserProfile({ name: editName, job: editJob, gender: editGender });
-        setProfile({ ...profile, name: editName, job: editJob, gender: editGender });
+        // Simpan semua data termasuk umur
+        updateUserProfile({ 
+            name: editName, 
+            job: editJob, 
+            age: editAge, // Simpan umur
+            gender: editGender 
+        });
+        
+        setProfile({ 
+            ...profile, 
+            name: editName, 
+            job: editJob, 
+            age: editAge, 
+            gender: editGender 
+        });
         setModalVisible(false);
     };
 
@@ -58,9 +80,9 @@ export default function Profile() {
                 <View style={styles.header}>
                     <View style={styles.avatarWrapper}>
                         <Image source={{ uri: profile.image }} style={styles.avatar} />
-                        <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
+                        <ScaleButton style={styles.editIcon} onPress={pickImage}>
                             <Ionicons name="camera" size={20} color="white" />
-                        </TouchableOpacity>
+                        </ScaleButton>
                     </View>
                     <Text style={[styles.name, { color: textColor }]}>{profile.name}, {profile.age}</Text>
                     <Text style={[styles.job, { color: subTextColor }]}>{profile.job}</Text>
@@ -80,23 +102,23 @@ export default function Profile() {
                     />
                 </View>
 
-                {/* Menu Items */}
+                {/* MENU ITEMS */}
                 <View style={styles.menuContainer}>
-                    <TouchableOpacity style={[styles.menuItem, { backgroundColor: cardBg, borderColor }]} onPress={() => setModalVisible(true)}>
+                    <ScaleButton style={[styles.menuItem, { backgroundColor: cardBg, borderColor }]} onPress={() => setModalVisible(true)}>
                         <View style={[styles.iconBox, { backgroundColor: 'rgba(56, 189, 248, 0.1)' }]}>
                             <Ionicons name="person" size={22} color="#38bdf8" />
                         </View>
                         <Text style={[styles.menuText, { color: textColor }]}>Edit Profile</Text>
                         <Ionicons name="chevron-forward" size={20} color={subTextColor} />
-                    </TouchableOpacity>
+                    </ScaleButton>
 
-                    <TouchableOpacity style={[styles.menuItem, { backgroundColor: cardBg, borderColor }]}>
+                    <ScaleButton style={[styles.menuItem, { backgroundColor: cardBg, borderColor }]}>
                         <View style={[styles.iconBox, { backgroundColor: 'rgba(236, 72, 153, 0.1)' }]}>
                             <Ionicons name="settings" size={22} color="#ec4899" />
                         </View>
                         <Text style={[styles.menuText, { color: textColor }]}>Settings</Text>
                         <Ionicons name="chevron-forward" size={20} color={subTextColor} />
-                    </TouchableOpacity>
+                    </ScaleButton>
                 </View>
             </ScrollView>
 
@@ -106,38 +128,85 @@ export default function Profile() {
                     <View style={[styles.modalContent, { backgroundColor: isDark ? '#1e293b' : '#fff' }]}>
                         <Text style={[styles.modalTitle, { color: textColor }]}>Edit Profile</Text>
                         
+                        {/* Input Name */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Name</Text>
                             <TextInput 
                                 style={[styles.input, { backgroundColor: isDark ? '#0f172a' : '#f8fafc', color: textColor, borderColor }]} 
-                                value={editName} onChangeText={setEditName} 
+                                value={editName} 
+                                onChangeText={setEditName} 
                             />
                         </View>
+
+                        {/* Input Job */}
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Job</Text>
                             <TextInput 
                                 style={[styles.input, { backgroundColor: isDark ? '#0f172a' : '#f8fafc', color: textColor, borderColor }]} 
-                                value={editJob} onChangeText={setEditJob} 
+                                value={editJob} 
+                                onChangeText={setEditJob} 
                             />
                         </View>
+
+                        {/* Input Age (BARU) */}
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Gender Interest</Text>
+                            <Text style={styles.label}>Age</Text>
+                            <TextInput 
+                                style={[styles.input, { backgroundColor: isDark ? '#0f172a' : '#f8fafc', color: textColor, borderColor }]} 
+                                value={editAge} 
+                                onChangeText={setEditAge} 
+                                keyboardType="numeric" // Keyboard angka
+                                maxLength={3}
+                            />
+                        </View>
+                        
+                        {/* Input Gender */}
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Gender</Text> 
                             <View style={styles.genderRow}>
-                                <TouchableOpacity style={[styles.genderBtn, editGender === 'male' && styles.genderActive, { borderColor, backgroundColor: isDark ? '#0f172a' : '#f8fafc' }]} onPress={() => setEditGender('male')}>
-                                    <Text style={[styles.genderText, editGender === 'male' && styles.genderTextActive]}>Women</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={[styles.genderBtn, editGender === 'female' && styles.genderActive, { borderColor, backgroundColor: isDark ? '#0f172a' : '#f8fafc' }]} onPress={() => setEditGender('female')}>
-                                    <Text style={[styles.genderText, editGender === 'female' && styles.genderTextActive]}>Men</Text>
-                                </TouchableOpacity>
+                                <ScaleButton 
+                                    style={[
+                                        styles.genderBtn, 
+                                        editGender === 'female' && styles.genderActive, 
+                                        { borderColor, backgroundColor: isDark ? '#0f172a' : '#f8fafc' }
+                                    ]} 
+                                    onPress={() => setEditGender('female')}
+                                >
+                                    <Text style={[
+                                        styles.genderText, 
+                                        editGender === 'female' && styles.genderTextActive
+                                    ]}>
+                                        Female
+                                    </Text>
+                                </ScaleButton>
+
+                                <ScaleButton 
+                                    style={[
+                                        styles.genderBtn, 
+                                        editGender === 'male' && styles.genderActive, 
+                                        { borderColor, backgroundColor: isDark ? '#0f172a' : '#f8fafc' }
+                                    ]} 
+                                    onPress={() => setEditGender('male')}
+                                >
+                                    <Text style={[
+                                        styles.genderText, 
+                                        editGender === 'male' && styles.genderTextActive
+                                    ]}>
+                                        Male
+                                    </Text>
+                                </ScaleButton>
                             </View>
                         </View>
 
-                        <TouchableOpacity onPress={handleSaveInfo} style={styles.saveBtn}>
+                        {/* Save Button */}
+                        <ScaleButton onPress={handleSaveInfo} style={styles.saveBtn}>
                             <Text style={styles.saveText}>Save Changes</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setModalVisible(false)} style={{ marginTop: 15 }}>
+                        </ScaleButton>
+                        
+                        {/* Cancel Button */}
+                        <ScaleButton onPress={() => setModalVisible(false)} style={{ marginTop: 15, padding: 10 }}>
                             <Text style={{ color: subTextColor }}>Cancel</Text>
-                        </TouchableOpacity>
+                        </ScaleButton>
                     </View>
                 </View>
             </Modal>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dimensions, StyleSheet, Text, View, Image, Modal, TouchableOpacity, StatusBar } from 'react-native';
+import { Dimensions, StyleSheet, Text, View, Image, Modal, StatusBar } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { 
     interpolate, 
@@ -16,9 +16,9 @@ import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { addMatch, FEMALE_CARDS, MALE_CARDS, userProfile } from '@/utils/dataStore';
 
-// IMPORT TOMBOL DARI FILE TERPISAH
-// Pastikan path-nya sesuai lokasi file ButtonAnimated kamu
-import AnimatedButton from './ButtonAnimated'; // Atau '@/components/ButtonAnimated'
+// IMPORT KOMPONEN TOMBOL
+import ScaleButton from '@/components/ScaleButton';      // Untuk tombol biasa (Refresh, Modal)
+import AnimatedButton from '@/components/ButtonAnimated'; // Untuk tombol aksi utama (Love, X)
 
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.3;
@@ -106,23 +106,23 @@ const SwipeableCard = () => {
                     <View style={styles.emptyState}>
                         <Ionicons name="sparkles" size={50} color={isDark ? "#38bdf8" : "#FE3C72"} />
                         <Text style={{ color: isDark ? '#94a3b8' : '#64748b', marginTop: 10 }}>You've seen everyone!</Text>
-                        <TouchableOpacity onPress={() => setCurrentIndex(0)} style={{ marginTop: 20 }}>
+                        
+                        {/* TOMBOL REFRESH (PAKAI SCALE BUTTON) */}
+                        <ScaleButton onPress={() => setCurrentIndex(0)} style={{ marginTop: 20 }}>
                             <Text style={{ color: isDark ? '#38bdf8' : '#FE3C72', fontWeight: 'bold' }}>REFRESH</Text>
-                        </TouchableOpacity>
+                        </ScaleButton>
                     </View>
                 )}
             </View>
 
-            {/* --- ACTION BUTTONS (MENGGUNAKAN KOMPONEN IMPORT) --- */}
+            {/* ACTION BUTTONS (Love & X menggunakan AnimatedButton) */}
             <View style={styles.bottomActions}>
-                {/* Tombol X (Close) */}
                 <AnimatedButton 
                     type="close" 
                     onPress={() => triggerSwipe('left')} 
                     isDark={isDark} 
                 />
 
-                {/* Tombol Love (Heart) */}
                 <AnimatedButton 
                     type="heart" 
                     onPress={() => triggerSwipe('right')} 
@@ -136,18 +136,26 @@ const SwipeableCard = () => {
                     <View style={[styles.modalContent, { backgroundColor: isDark ? '#1e293b' : '#fff' }]}>
                         <Text style={[styles.matchTitle, { color: isDark ? '#fff' : '#1e293b' }]}>IT'S A MATCH</Text>
                         <Text style={styles.matchSubtitle}>Start a conversation now</Text>
+                        
                         <View style={styles.avatarRow}>
                             <Image source={{ uri: myImage }} style={[styles.matchAvatar, { borderColor: '#38bdf8', zIndex: 1, marginRight: -25 }]} />
                             <Image source={{ uri: matchData?.image }} style={[styles.matchAvatar, { borderColor: '#ec4899', zIndex: 0 }]} />
                         </View>
-                        <TouchableOpacity style={styles.modalBtn} onPress={() => {setShowMatchModal(false); router.push({ pathname: "/chat_room", params: { name: matchData?.name, image: matchData?.image } }); }}>
+
+                        {/* TOMBOL SEND MESSAGE (PAKAI SCALE BUTTON) */}
+                        <ScaleButton 
+                            style={styles.modalBtnWrapper} 
+                            onPress={() => {setShowMatchModal(false); router.push({ pathname: "/chat_room", params: { name: matchData?.name, image: matchData?.image } }); }}
+                        >
                             <LinearGradient colors={['#38bdf8', '#2563eb']} style={styles.modalGradient}>
                                 <Text style={styles.modalBtnText}>SEND MESSAGE</Text>
                             </LinearGradient>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setShowMatchModal(false)}>
+                        </ScaleButton>
+                        
+                        {/* TOMBOL MAYBE LATER (PAKAI SCALE BUTTON) */}
+                        <ScaleButton onPress={() => setShowMatchModal(false)} style={{ padding: 10 }}>
                             <Text style={styles.skipText}>Maybe Later</Text>
-                        </TouchableOpacity>
+                        </ScaleButton>
                     </View>
                 </View>
             </Modal>
@@ -235,7 +243,8 @@ const styles = StyleSheet.create({
     matchSubtitle: { color: '#94a3b8', fontSize: 16, marginBottom: 40 },
     avatarRow: { flexDirection: 'row', marginBottom: 50 },
     matchAvatar: { width: 120, height: 120, borderRadius: 60, borderWidth: 4 },
-    modalBtn: { width: '100%', height: 55, borderRadius: 30, marginBottom: 20, overflow: 'hidden' },
+    
+    modalBtnWrapper: { width: '100%', height: 55, borderRadius: 30, marginBottom: 20, overflow: 'hidden' },
     modalGradient: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     modalBtnText: { color: 'white', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 },
     skipText: { color: '#64748b', fontWeight: '600' }

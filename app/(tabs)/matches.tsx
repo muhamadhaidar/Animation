@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { View, Text, ScrollView, Image, StyleSheet, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { getActiveChats, userProfile } from '@/utils/dataStore';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import ScaleButton from '@/components/ScaleButton'; // IMPORT INI
 
 export default function Matches() {
     const router = useRouter();
@@ -40,7 +41,8 @@ export default function Matches() {
                     </View>
                 ) : (
                     allMatches.map((chat: any) => (
-                        <TouchableOpacity 
+                        // GANTI TouchableOpacity JADI ScaleButton
+                        <ScaleButton 
                             key={chat.id} 
                             style={[styles.chatCard, { backgroundColor: cardBg, borderColor }]} 
                             onPress={() => router.push({ pathname: "/chat_room", params: { name: chat.name, image: chat.img } })}
@@ -61,7 +63,7 @@ export default function Matches() {
                                 <Text style={styles.timeText}>Now</Text>
                                 {chat.isNew && <View style={styles.badge}><Text style={styles.badgeText}>1</Text></View>}
                             </View>
-                        </TouchableOpacity>
+                        </ScaleButton>
                     ))
                 )}
             </ScrollView>
